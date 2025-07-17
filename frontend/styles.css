@@ -1,0 +1,88 @@
+/* Importa Google Fonts o define fuentes generales */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+/* Estilos Generales */
+body {
+    font-family: 'Roboto', sans-serif;
+    padding: 0;
+    background-color: #f8f9fa; /* Color de fondo claro */
+    overflow-x: hidden; /* Evita scroll horizontal no deseado */
+}
+
+/* Estilos del Wrapper y Sidebar (para diseño de dashboard con menú lateral) */
+#wrapper {
+    display: flex;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh; /* Ocupa toda la altura de la vista */
+    width: 250px; /* Ancho fijo del sidebar */
+    background-color: #343a40; /* Color oscuro para el sidebar */
+    transition: margin .25s ease-out; /* Animación para ocultar/mostrar */
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 25px 25px;
+    font-size: 25px;
+    font-weight: bold;
+    color: #f8f9fa; /* Color del texto del encabezado */
+    border-bottom: 1px solid rgb(192, 192, 192);
+}
+/*-----------------------------------*/
+#sidebar-wrapper .list-group-item {
+    padding: 25px 25px;
+    color: #adb5bd; /* Color del texto de los items */
+    border: none;
+}
+
+
+/*-----------------------------------*/
+
+/* Estilos del Contenido Principal */
+#page-content-wrapper {
+    min-width: 100; /* Necesario para que el contenido se ajuste */
+    width: 100%;
+    /* padding: 20px; Puedes añadir padding si lo necesitas */
+}
+
+/* Estilos específicos para secciones del dashboard */
+section {
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+h3 {
+    color: #007bff; /* Color azul para títulos de sección */
+    margin-bottom: 20px;
+}
+
+/* Ejemplo para tablas de resultados */
+#results-table-container table {
+    margin-top: 20px;
+}
+
+/* Ejemplo para el calendario */
+#calendar {
+    max-width: 900px; /* Limita el ancho del calendario */
+    margin: 0 auto; /* Centra el calendario */
+}
+
+a{
+    margin-bottom: 1;
+    display: block;
+}
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: -250px; /* Oculta el sidebar en pantallas pequeñas */
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: 0; /* Muestra el sidebar al activar el toggle */
+    }
+    #page-content-wrapper {
+        width: 100%;
+    }
+}
