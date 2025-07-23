@@ -1,51 +1,54 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService # Seguimos importando Service
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from bs4 import BeautifulSoup
-import time
-import tempfile
-import shutil
-import os
-
-# ChromeDriverManager!
+from selenium.webdriver import chrome # Mantengo esto ya que lo tenías en tus imports originales
 from webdriver_manager.chrome import ChromeDriverManager
+import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+# Configuración
+STEAM_URL = "https://store.steampowered.com/login/"
+STEAM_USERNAME = os.getenv('STEAM_USER')
+STEAM_PASSWORD = os.getenv('STEAM_PASSWORD')
+
+# --- VERIFICACIÓN CRÍTICA DE LAS VARIABLES DE ENTORNO ---
 
 
-#PATH TO THE BINARY CHROME
-CHROME_BINARY_PATH = '/opt/google/chrome/google-chrome'
-STEAM_URL = "https://store.steampowered.com"
+# Configuración del navegador
+chrome_options = Options()
 
-
-
-
-#INITIALIZE THE WEBDRIVER/OPTIONS AND SERVICE
-
-service = ChromeService(ChromeDriverManager().install())
-
-driver = webdriver.Chrome(service=service, options=Options())
-
+# Inicializar WebDriver
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
 try:
-    print(f"Yendo a {STEAM_URL}")
     driver.get(STEAM_URL)
 
-    # Esperar hasta que el logo de Steam esté presente y hacer clic
-    logo_element = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "//img[@alt='STEAM']"))
-    )
-    logo_element.click()
-    print("LISTO")
+    # Espera inicial para que la página cargue, esencial cuando no usamos WebDriverWait
+    time.sleep(2)
 
-    # Aquí podrías añadir un tiempo de espera para depuración
-    time.sleep(5)
+    # --- Localizar campos de texto y contraseña ---
+    username_field = driver.find_element("css selector", 'input[type="text"]')
+    password_field = driver.find_element("css selector", 'input[type="password"]')
+
+    username_field.send_keys(STEAM_USERNAME)
+    password_field.send_keys(STEAM_PASSWORD)
+
+    # --- Localizar el botón de Sign in ---
+    sign_in_button = driver.find_element("xpath", '//button[@type="submit" and text()="Sign in"]')
+    sign_in_button.click()
+
+    # Espera después de intentar iniciar sesión para observar el resultado
+    time.sleep(10)
 
 except Exception as e:
-    print(f"Ocurrió un error: {e}")
+    print(f"Ocurrió un error durante el intento de inicio de sesión: {e}")
+    # Puedes añadir aquí capturas de pantalla o logs para depuración
+    # driver.save_screenshot("error_screenshot.png")
+
 finally:
+    # Asegura que el navegador se cierre
     if driver:
         driver.quit()
-        print("Navegador cerrado.")
-  
