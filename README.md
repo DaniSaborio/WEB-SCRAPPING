@@ -34,16 +34,17 @@ Este proyecto es una plataforma web integral diseñada para realizar scraping de
 ## 📁 Estructura del Proyecto
 
 WEB-SCRAPPING/
+
 ├── .env                               
 ├── main.py                     
-├── requirements.txt            # Dependencias de Python
-├── README.md                   # Este archivo
+├── requirements.txt           
+├── README.md                  
 ├── api/
 │   ├── json_api_server.py      
 │   └── scrapper/
-│       └── scrapper.py         #
+│       └── scrapper.py        
 ├── frontend/
-│   ├── index.html              # Página principal del dashboard
+│   ├── index.html             
 │   ├── css/                  
 │   │   └── style.css
 │   └
@@ -68,14 +69,10 @@ Sigue estos pasos para poner en marcha el proyecto en tu entorno local.
 git clone https://github.com/DaniSaborio/WEB-SCRAPPING.git
 cd WEB-SCRAPPING
 
-python3 -m venv venv
-source venv/bin/activate  # En Linux/macOS
-# .\venv\Scripts\activate # En Windows
+
+# Instalar dependencias
 
 pip install -r requirements.txt
-
-
-# .env (NO SUBIR A GIT)
 
 # Configuración de PostgreSQL
 PG_DB=your_database_name
