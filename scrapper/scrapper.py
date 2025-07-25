@@ -53,7 +53,7 @@ def extract_steam_game_data_with_bs4(html_content):
         price_div = game.select_one(".discount_original_price")
         original_price = None
         if price_div:
-            price_text = price_div.get_text(strip=True)
+            price_text = price_div.get_text(strip=True)if price_div else discount
             if "Gratis" in price_text or "Free" in price_text:
                 original_price = 0.0
             else:
@@ -76,7 +76,7 @@ def extract_steam_game_data_with_bs4(html_content):
             # discount: solo el número, extraído del texto anterior
             discount = None
         discount_element = game.select_one(".discount_final_price")
-        discount_price = discount_element.get_text(strip=True) 
+        discount_price = discount_element.get_text(strip=True) if price_div else "N/A"
         if discount_element:
             try:
                 discount = float(discount_element.get_text(strip=True).replace('%', '').replace('-', '').strip())
@@ -89,7 +89,6 @@ def extract_steam_game_data_with_bs4(html_content):
                     discount = float(prices_discount[0].replace('.', '').replace(',', '.'))
             except Exception as e:
                     logging.warning(f"No se pudo convertir el precio para {game_name}: {price_text} ({e})")
-                    discount = None
 
         packages_elem = game.select_one(".includes_games_results")
         packages = packages_elem.get_text(strip=True) if packages_elem else "N/A"
