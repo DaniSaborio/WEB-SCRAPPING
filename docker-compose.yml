@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: steam_postgres
+    environment:
+      POSTGRES_DB: steamdb
+      POSTGRES_USER: steamuser
+      POSTGRES_PASSWORD: steampass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - steam_net
+
+  api:
+    build: .
+    container_name: steam_api
+    env_file:
+      - .env
+    environment:
+      PG_DB: ${PG_DB:-steamdb}
+      PG_USER: ${PG_USER:-steamuser}
+      PG_PASSWORD: ${PG_PASSWORD:-steampass}
+      PG_HOST: ${PG_HOST:-db}
+      PG_PORT: ${PG_PORT:-5432}
+    depends_on:
+      - db
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api/server_data:/app/api/server_data
+    networks:
+      - steam_net
+
+networks:
+  steam_net:
+
+volumes:
+  postgres_data:
