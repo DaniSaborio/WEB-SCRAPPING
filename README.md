@@ -2,7 +2,7 @@
 
 Este proyecto es una plataforma web integral diseñada para realizar scraping de datos de juegos (simulando una tienda como Steam), persistir estos datos en una base de datos PostgreSQL, visualizarlos a través de un dashboard moderno, y utilizar un modelo de lenguaje grande (LLM) para generar análisis sobre el panorama del mercado de juegos. Incluye un scheduler para automatizar la ejecución del scraper y una gestión robusta de logs y errores.
 
-## 🌟 Características Principales
+## Características Principales
 
 * **Scraping Automatizado:** Extracción de datos de juegos (nombre, precios, descuentos, etc.) de una fuente web (simulada por Steam).
 * **Persistencia de Datos:** Almacenamiento y gestión de los datos extraídos en una base de datos **PostgreSQL**.
@@ -14,7 +14,7 @@ Este proyecto es una plataforma web integral diseñada para realizar scraping de
 * **Registro de Eventos:** Sistema de logging estructurado para monitorear ejecuciones del scraper (manuales y programadas), errores y otros eventos importantes.
 * **Resiliencia:** Manejo adecuado de excepciones en todo el sistema para evitar fallos en tiempo de ejecución y proporcionar mensajes de error claros.
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 * **Backend (Python 3.x):**
     * **Flask:** Microframework web para construir la API RESTful.
@@ -31,35 +31,42 @@ Este proyecto es una plataforma web integral diseñada para realizar scraping de
     * **HTML5, CSS3, JavaScript (Vanilla JS):** Base para la interfaz de usuario.
     * **(Opcional):** Si se utilizan librerías/frameworks CSS/JS adicionales (ej. Bootstrap, Chart.js, FullCalendar.js), listarlas aquí.
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 WEB-SCRAPPING/
+.
+├── backend
+│   ├── api
+│   │   ├── app.py
+│   │   ├── Containerfile
+│   │   └── requirements.txt
+│   ├── scheduler
+│   │   ├── Containerfile
+│   │   ├── requirements.txt
+│   │   └── scheduler.py
+│   └── scrapper
+│       ├── Containerfile
+│       ├── requirements.txt
+│       └── scrapper.py
+├── data
+│   └── exports
+├── docker-compose.yml
+├── frontend
+│   ├── Containerfile
+│   └── public
+│       ├── css
+│       │   └── styles.css
+│       ├── index.html
+│       └── js
+│           ├── calendar.js
+│           ├── files.js
+│           ├── main.js
+│           └── result.js
+├── logs
+│   └── scrapper.log
+└── README.md                     
 
-├── .env                               
-├── main.py                     
-├── requirements.txt           
-├── README.md                  
-├── api/
-│   ├── json_api_server.py      
-│   └── scrapper/
-│       └── scrapper.py        
-├── frontend/
-│   ├── index.html             
-│   ├── css/                  
-│   │   └── style.css
-│   └
-│   ├── main.js             
-│   ├── calendar.js         
-│   ├── result.js          
-│   └── files.js            
-├── llm/
-│   ├── llm_selector.py         
-│               
-├── server_data/
-│   └── exports/                
-└── logs/                       
-
-## 🚀 Configuración e Instalación
+## Configuración e Instalación
 
 Sigue estos pasos para poner en marcha el proyecto en tu entorno local.
 
@@ -82,7 +89,7 @@ PG_HOST=localhost
 PG_PORT=5432
 
 
-🌐 Endpoints de la API
+Endpoints de la API
 La aplicación Flask expone los siguientes endpoints:
 
 / (GET): Sirve la página principal del dashboard (index.html) del frontend.
@@ -101,5 +108,5 @@ Ejemplo: http://localhost:5000/exports/steam_discounts_20250725_103000.csv
 
 /api/llm_analysis (GET): Obtiene un análisis y opinión general del mercado de juegos, generada por el LLM, basándose en los datos más recientes scrapeados de la base de datos. Devuelve la opinión del LLM en formato JSON.
 
-⏰ Automatización (Scheduler)
+Automatización (Scheduler)
 El servidor Flask integra un scheduler (APScheduler) que ejecuta el script de scraping (scrapper/scrapper.py) automáticamente cada 30 minutos en un hilo de fondo. Esto asegura que los datos estén siempre actualizados sin intervención manual. Los logs de estas ejecuciones programadas se registran en la tabla event_logs con el tipo "Scraper Run (Scheduled)".
