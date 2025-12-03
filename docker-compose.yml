@@ -2,41 +2,91 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16
-    container_name: steam_postgres
+    image: postgres:15
+    container_name: webscrap_db
     environment:
-      POSTGRES_DB: steamdb
-      POSTGRES_USER: steamuser
-      POSTGRES_PASSWORD: steampass
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${PG_DB:-steam_scraper}
+      POSTGRES_USER: ${PG_USER:-scraper}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - steam_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-scraper} -d ${PG_DB:-steam_scraper}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   api:
-    build: .
-    container_name: steam_api
-    env_file:
-      - .env
-    environment:
-      PG_DB: ${PG_DB:-steamdb}
-      PG_USER: ${PG_USER:-steamuser}
-      PG_PASSWORD: ${PG_PASSWORD:-steampass}
-      PG_HOST: ${PG_HOST:-db}
-      PG_PORT: ${PG_PORT:-5432}
-    depends_on:
-      - db
+    build:
+      context: ./backend/api
+      dockerfile: Containerfile
+    container_name: webscrap_api
     ports:
       - "5000:5000"
+    environment:
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_DB: ${PG_DB:-steam_scraper}
+      PG_USER: ${PG_USER:-scraper}
+      PG_PASSWORD: ${PG_PASSWORD:-password}
+      EXPORT_PATH: /data/exports
     volumes:
-      - ./api/server_data:/app/api/server_data
-    networks:
-      - steam_net
+      - exports:/data/exports
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
-networks:
-  steam_net:
+  scrapper:
+    build:
+      context: ./backend/scrapper
+      dockerfile: Containerfile
+    container_name: webscrap_scrapper
+    environment:
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_DB: ${PG_DB:-steam_scraper}
+      PG_USER: ${PG_USER:-scraper}
+      PG_PASSWORD: ${PG_PASSWORD:-password}
+      EXPORT_PATH: /data/exports
+      STEAM_USER: ${STEAM_USER}
+      STEAM_PASSWORD: ${STEAM_PASSWORD}
+    volumes:
+      - exports:/data/exports
+      - ./logs:/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: ./backend/scheduler
+      dockerfile: Containerfile
+    container_name: webscrap_scheduler
+    environment:
+      PG_HOST: db
+      PG_PORT: 5432
+      PG_DB: ${PG_DB:-steam_scraper}
+      PG_USER: ${PG_USER:-scraper}
+      PG_PASSWORD: ${PG_PASSWORD:-password}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+    container_name: webscrap_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  exports:
