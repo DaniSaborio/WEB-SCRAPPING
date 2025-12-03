@@ -1,24 +1,28 @@
-# api/json_api_server.py
-
 from flask import Flask, jsonify, request, send_from_directory
 from flask.cli import load_dotenv
 from flask_cors import CORS
 import psycopg2
 import os
-import subprocess # <<< --- IMPORTA SUBPROCESS
+import requests
+import subprocess
 from datetime import datetime
 
-# --- Configuración de la Aplicación Flask ---
-EXPORT_DIR_API = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server_data', 'exports')
+EXPORT_DIR_API = os.environ.get(
+    "EXPORT_PATH",
+    "/data/exports",
+)
 
-FRONTEND_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+FRONTEND_FOLDER = os.environ.get(
+    "FRONTEND_FOLDER",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public"),
+)
+
 app = Flask(__name__,
             static_folder=FRONTEND_FOLDER,
             static_url_path='/'
            )
 CORS(app)
 
-# --- Configuración de la Base de Datos ---
 load_dotenv()
 DB_NAME = os.getenv('PG_DB')
 DB_USER = os.getenv('PG_USER')
@@ -62,7 +66,7 @@ def initialize_database():
                 related_table VARCHAR(50)
             );
         """)
-        # Agrega la creación de la tabla scrapped_steam si no existe, necesaria para el scraper
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS scrapped_steam (
                 id SERIAL PRIMARY KEY,
@@ -95,18 +99,18 @@ def list_exported_files():
     try:
         for filename in os.listdir(EXPORT_DIR_API):
             file_path = os.path.join(EXPORT_DIR_API, filename)
-            if os.path.isfile(file_path): # Asegúrate de que sea un archivo y no un subdirectorio
-                file_size = os.path.getsize(file_path) # Tamaño en bytes
-                last_modified_timestamp = os.path.getmtime(file_path) # Última modificación
+            if os.path.isfile(file_path): 
+                file_size = os.path.getsize(file_path) 
+                last_modified_timestamp = os.path.getmtime(file_path) 
                 last_modified_date = datetime.fromtimestamp(last_modified_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
                 files_list.append({
                     "name": filename,
-                    "size": f"{file_size / 1024:.2f} KB", # Convertir a KB
+                    "size": f"{file_size / 1024:.2f} KB",
                     "last_modified": last_modified_date,
-                    "url": f"/exports/{filename}" # URL para descargar el archivo (ver endpoint de descarga)
+                    "url": f"/exports/{filename}" 
                 })
-        # Ordenar por fecha de modificación descendente
+
         files_list.sort(key=lambda x: datetime.strptime(x['last_modified'], '%Y-%m-%d %H:%M:%S'), reverse=True)
         return jsonify(files_list), 200
 
@@ -114,7 +118,8 @@ def list_exported_files():
         print(f"Error al listar archivos exportados: {e}")
         return jsonify({"error": "Error interno del servidor al listar archivos."}), 500
 
-# --- NUEVO ENDPOINT PARA SERVIR ARCHIVOS EXPORTADOS ---
+# --- ENDPOINT PARA SERVIR ARCHIVOS EXPORTADOS ---
+
 @app.route('/exports/<path:filename>')
 def download_exported_file(filename):
     """
@@ -198,45 +203,21 @@ def get_events():
         if conn:
             conn.close()
 
-# --- NUEVO ENDPOINT PARA EJECUTAR EL SCRAPER ---
+# --- ENDPOINT PARA EJECUTAR EL SCRAPER ---
+
 @app.route('/api/run_scraper', methods=['POST'])
 def run_scraper():
-    scraper_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scrapper', 'scrapper.py')
-
-    # !!! AÑADE ESTA LÍNEA !!!
-    print(f"DEBUGGING PATH CHECK: Intentando encontrar el script en: {scraper_script_path}")
-    
-    if not os.path.exists(scraper_script_path):
-     return jsonify({"error": f"Scraper script no encontrado en: {scraper_script_path}"}), 500
-
     try:
-        # Ejecutar el script Python usando subprocess
-        # 'python' debe estar en tu PATH, o usa la ruta completa a tu intérprete de Python
-        result = subprocess.run(
-            ['python', scraper_script_path],
-            capture_output=True, # Captura stdout y stderr
-            text=True,           # Decodifica la salida como texto
-            check=True           # Lanza una excepción si el comando devuelve un código de error
-        )
-        
-        # Opcional: Loguear la salida del scraper en la consola del servidor
-        print(f"Scraper stdout:\n{result.stdout}")
-        if result.stderr:
-            print(f"Scraper stderr:\n{result.stderr}")
-
-        # Retornar una respuesta de éxito
-        return jsonify({"message": "Scraper ejecutado exitosamente", "output": result.stdout}), 200
-
-    except subprocess.CalledProcessError as e:
-        # Si el scraper retorna un código de error
-        print(f"Error al ejecutar scraper (CalledProcessError): {e}")
-        print(f"Scraper stdout (Error): {e.stdout}")
-        print(f"Scraper stderr (Error): {e.stderr}")
-        return jsonify({"error": f"Fallo al ejecutar scraper: {e.stderr}", "details": str(e)}), 500
+        resp = requests.post("http://scrapper:8000/run", timeout=5)
+        return jsonify({
+            "message": "Solicitud enviada al scrapper",
+            "scrapper_status_code": resp.status_code,
+            "scrapper_response": resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text,
+        }), 202
     except Exception as e:
-        # Otros posibles errores (ej. 'python' no encontrado)
-        print(f"Error inesperado al ejecutar scraper: {e}")
-        return jsonify({"error": "Error interno del servidor al ejecutar scraper", "details": str(e)}), 500
+        print(f"Error al llamar al scrapper: {e}")
+        return jsonify({"error": "No se pudo contactar al scrapper", "details": str(e)}), 500
+
 
 if __name__ == '__main__':
     initialize_database()

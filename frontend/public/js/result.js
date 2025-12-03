@@ -1,8 +1,5 @@
-// frontend/results.js (Código Correcto para Módulo ES6)
-
-// Función para obtener y mostrar los resultados de Steam
-export async function fetchSteamResults() { // <<< --- AÑADE 'export' aquí
-    console.log("results.js: fetchSteamResults se está ejecutando."); // Añade un log para verificar
+export async function fetchSteamResults() { 
+    console.log("results.js: fetchSteamResults se está ejecutando."); 
     try {
         const response = await fetch('http://localhost:5000/api/results');
         if (!response.ok) {
@@ -13,7 +10,7 @@ export async function fetchSteamResults() { // <<< --- AÑADE 'export' aquí
 
         const tbody = document.getElementById('scraping-data-body');
         if (tbody) {
-            tbody.innerHTML = ""; // Limpia la tabla antes de cargar
+            tbody.innerHTML = ""; 
             data.forEach(item => {
                 tbody.innerHTML += `
                     <tr>
@@ -36,6 +33,3 @@ export async function fetchSteamResults() { // <<< --- AÑADE 'export' aquí
         }
     }
 }
-
-// <<< --- ELIMINA COMPLETAMENTE ESTA LÍNEA:
-// window.onload = fetchSteamResults;

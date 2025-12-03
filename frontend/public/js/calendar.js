@@ -1,9 +1,6 @@
-// frontend/calendar.js (Código Correcto para Módulo ES6)
-
 const API_EVENTS_URL = 'http://localhost:5000/api/events';
 
 const initCalendar = (elementId) => {
-    // ... (todo el código de inicialización del calendario) ...
     const calendarEl = document.getElementById(elementId);
     if (!calendarEl) {
         console.error(`Error en calendar.js: Elemento con ID '${elementId}' no encontrado. No se puede inicializar el calendario.`);
@@ -48,5 +45,4 @@ const initCalendar = (elementId) => {
     console.log("calendar.js: Calendario renderizado para el elemento:", elementId);
 };
 
-// <<< --- EXPORTACIÓN DE MÓDULO ESTÁNDAR
 export { initCalendar as init };

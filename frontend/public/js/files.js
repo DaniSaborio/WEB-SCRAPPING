@@ -1,11 +1,10 @@
-// frontend/files.js
-
 const API_FILES_URL = 'http://localhost:5000/api/files';
 
 /**
  * Obtiene la lista de archivos exportados desde la API y los muestra en el contenedor.
  * @param {string} elementId El ID del contenedor HTML donde se mostrará la lista de archivos.
  */
+
 export async function fetchAndDisplayFiles(elementId) {
     console.log('files.js: Intentando cargar lista de archivos desde la API...');
     const filesContainer = document.getElementById(elementId);
@@ -30,7 +29,7 @@ export async function fetchAndDisplayFiles(elementId) {
         }
 
         const ul = document.createElement('ul');
-        ul.className = 'list-group'; // Clases de Bootstrap para una lista bonita
+        ul.className = 'list-group'; 
 
         files.forEach(file => {
             const li = document.createElement('li');
@@ -44,7 +43,7 @@ export async function fetchAndDisplayFiles(elementId) {
             `;
             ul.appendChild(li);
         });
-        filesContainer.innerHTML = ''; // Limpiar el mensaje de carga
+        filesContainer.innerHTML = '';
         filesContainer.appendChild(ul);
 
     } catch (error) {

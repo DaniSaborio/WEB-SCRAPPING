@@ -1,3 +1,6 @@
+from flask import Flask, jsonify
+import threading
+
 from bs4 import BeautifulSoup
 import re
 import logging
@@ -8,7 +11,6 @@ from dotenv import load_dotenv
 import csv
 from datetime import datetime
 
-# Selenium imports
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -18,19 +20,12 @@ load_dotenv()
 
 STEAM_DISCOUNTS_URL = "https://store.steampowered.com/search/?specials=1"
 
-# Directorio de exportación (../server_data/exports desde este archivo)
-EXPORT_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "..",
-    "server_data",
-    "exports",
-)
+EXPORT_DIR = os.environ.get("EXPORT_PATH", "/data/exports")
+
+app = Flask(__name__)
 
 
 def extract_steam_game_data_with_bs4(html_content):
-    """
-    Extrae datos de juegos de Steam de un contenido HTML usando Beautiful Soup.
-    """
     soup = BeautifulSoup(html_content, "html.parser")
     extracted_data = []
     games = soup.select("a.search_result_row")
@@ -39,7 +34,6 @@ def extract_steam_game_data_with_bs4(html_content):
         game_name_elem = game.select_one(".title")
         game_name = game_name_elem.get_text(strip=True) if game_name_elem else "N/A"
 
-        # Precio original
         price_div = game.select_one(".discount_original_price")
         original_price = None
         if price_div:
@@ -59,7 +53,6 @@ def extract_steam_game_data_with_bs4(html_content):
                     )
                     original_price = None
 
-        # Descuento y porcentaje
         percentage = ""
         discount = None
 
@@ -111,13 +104,11 @@ def get_discounts_html_with_selenium():
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.binary_location = "/usr/bin/chromium"
 
-    # Usar el chromedriver instalado por el sistema en la imagen
     service = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     html_content = ""
     try:
-        # Login
         driver.get(STEAM_URL)
         time.sleep(2)
 
@@ -133,7 +124,6 @@ def get_discounts_html_with_selenium():
 
         time.sleep(15)
 
-        # Ir a la página de descuentos
         driver.get("https://store.steampowered.com/search/?specials=1")
         time.sleep(5)
         html_content = driver.page_source
@@ -145,12 +135,7 @@ def get_discounts_html_with_selenium():
     return html_content
 
 
-
 def save_data_to_csv(data, directory, filename_prefix="steam_discounts"):
-    """
-    Guarda la lista de diccionarios en un archivo CSV.
-    Crea el directorio si no existe.
-    """
     if not os.path.exists(directory):
         os.makedirs(directory)
         logging.info(f"Directorio de exportación creado: {directory}")
@@ -178,59 +163,78 @@ def save_data_to_csv(data, directory, filename_prefix="steam_discounts"):
         return None
 
 
-if __name__ == "__main__":
-    # Conexión a PostgreSQL
-    conn = psycopg2.connect(
-        host=os.getenv("PG_HOST"),
-        dbname=os.getenv("PG_DB"),
-        user=os.getenv("PG_USER"),
-        password=os.getenv("PG_PASSWORD"),
-    )
-    cur = conn.cursor()
+def run_scraper_job():
+    logging.info("Iniciando trabajo de scraping desde run_scraper_job()")
 
-    # Crear tabla si no existe
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS scrapped_steam (
-            id SERIAL PRIMARY KEY NOT NULL,
-            game_name VARCHAR(255) NOT NULL,
-            original_price NUMERIC(10, 2),
-            discount NUMERIC(10, 2),
-            packages VARCHAR(20),
-            percentage VARCHAR(20) NOT NULL
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("PG_HOST"),
+            dbname=os.getenv("PG_DB"),
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
         )
-        """
-    )
-    conn.commit()
+        cur = conn.cursor()
 
-    html_content = get_discounts_html_with_selenium()
-    if html_content:
-        data = extract_steam_game_data_with_bs4(html_content)
-
-        # Limpiar tabla e insertar nuevos datos
-        cur.execute("TRUNCATE TABLE scrapped_steam;")
-        for game in data:
-            cur.execute(
-                """
-                INSERT INTO scrapped_steam (game_name, original_price, discount, packages, percentage)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                (
-                    game["game_name"],
-                    game["original_price"],
-                    game["discount"],
-                    game["packages"],
-                    game["percentage"],
-                ),
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS scrapped_steam (
+                id SERIAL PRIMARY KEY NOT NULL,
+                game_name VARCHAR(255) NOT NULL,
+                original_price NUMERIC(10, 2),
+                discount NUMERIC(10, 2),
+                packages VARCHAR(20),
+                percentage VARCHAR(20) NOT NULL
             )
+            """
+        )
         conn.commit()
-        print("Datos guardados en la base de datos.")
 
-        csv_file_path = save_data_to_csv(data, EXPORT_DIR)
-        if csv_file_path:
-            print(f"Datos también exportados a CSV: {csv_file_path}")
+        html_content = get_discounts_html_with_selenium()
+        if html_content:
+            data = extract_steam_game_data_with_bs4(html_content)
+
+            cur.execute("TRUNCATE TABLE scrapped_steam;")
+            for game in data:
+                cur.execute(
+                    """
+                    INSERT INTO scrapped_steam (game_name, original_price, discount, packages, percentage)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        game["game_name"],
+                        game["original_price"],
+                        game["discount"],
+                        game["packages"],
+                        game["percentage"],
+                    ),
+                )
+            conn.commit()
+            logging.info("Datos guardados en la base de datos.")
+
+            csv_file_path = save_data_to_csv(data, EXPORT_DIR)
+            if csv_file_path:
+                logging.info(f"Datos también exportados a CSV: {csv_file_path}")
+            else:
+                logging.warning("Falló la exportación a CSV.")
         else:
-            print("Falló la exportación a CSV.")
+            logging.warning("No se obtuvo HTML de Steam; no se realizará scraping.")
+    except Exception as e:
+        logging.error(f"Error en run_scraper_job: {e}")
+    finally:
+        if conn:
+            conn.close()
 
-    cur.close()
-    conn.close()
+
+@app.route("/run", methods=["POST"])
+def trigger_scraper():
+    try:
+        t = threading.Thread(target=run_scraper_job)
+        t.start()
+        return jsonify({"message": "Scraper iniciado"}), 202
+    except Exception as e:
+        logging.error(f"Error al lanzar hilo de scraping: {e}")
+        return jsonify({"error": "No se pudo iniciar el scraper", "details": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)

@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Dependencias del sistema (para psycopg2, etc.)
+# Dependencias del sistema para psycopg2 + Selenium
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y \
     libxi6 \
     libxtst6 \
     libatk1.0-0 \
-    libnss3 \
     libxrandr2 \
     libasound2 \
     libpangocairo-1.0-0 \
@@ -30,19 +29,16 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos backend (API + scrapper) y frontend
-COPY api/ ./api/
-COPY frontend/ ./frontend/
+# Copiar el scraper
+COPY scrapper.py .
 
-# Opcional: si quieres tener main.py/scheduler.py dentro también
-COPY main.py scheduler.py ./ 
+ENV PYTHONUNBUFFERED=1 \
+    PG_HOST=db \
+    PG_PORT=5432 \
+    EXPORT_PATH=/data/exports \
+    STEAM_USER= \
+    STEAM_PASSWORD=
 
-# Variables por defecto (se sobreescriben en docker-compose)
-ENV PG_HOST=db \
-    PG_PORT=5432
+EXPOSE 8000
 
-WORKDIR /app/api
-
-EXPOSE 5000
-
-CMD ["python", "json_api_server.py"]
+CMD ["python", "scrapper.py"]

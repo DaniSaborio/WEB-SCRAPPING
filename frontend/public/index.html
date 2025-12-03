@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Scraping y LLM - UTN</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous"> 
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"> 
+
+    <!-- FullCalendar -->
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.18/main.min.css' rel='stylesheet' /> 
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.18/main.css' rel='stylesheet' /> 
+
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar-wrapper" class="border-end">
+            <div class="sidebar-heading d-flex align-items-center px-3">
+                <span class="fs-5 fw-bold">WEB SCRAPING</span>
+            </div>
+            <div class="list-group list-group-flush mt-3">
+                <a href="#scraping-results" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <i class="bi bi-cloud-arrow-down me-2"></i>
+                    <span>Resultados Scraping</span>
+                </a>
+                <a href="#file-visualization" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <i class="bi bi-folder2-open me-2"></i>
+                    <span>Archivos Descargados</span>
+                </a>
+                <a href="#calendar-view" class="list-group-item list-group-item-action d-flex align-items-center">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <span>Calendario de Actividades</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Contenido principal -->
+        <div id="page-content-wrapper" class="flex-grow-1">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+                <div class="container-fluid">
+                    <button class="btn btn-outline-primary d-lg-none me-2" id="menu-toggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <span class="navbar-brand mb-0 h5">Dashboard Scraping & LLM - UTN</span>
+                    <div class="d-none d-md-flex ms-auto align-items-center">
+                        <span class="text-muted small me-3">Entorno: Producción</span>
+                        <span class="badge bg-primary-subtle text-primary">v1.0</span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Contenido -->
+            <div class="container-fluid py-4">
+                <!-- Resultados Scraping -->
+                <section id="scraping-results" class="mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="card-title h5 mb-0">Resultados del Scraping</h3>
+                                <small class="text-muted">Datos extraídos de Steam en tiempo real.</small>
+                            </div>
+                            <button id="run-scraper-btn" class="btn btn-primary">
+                                <i class="bi bi-play-circle me-1"></i> Ejecutar Scraper
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="scraper-status" class="alert d-none mb-3" role="alert"></div>
+                            <div id="results-table-container" class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Precio Original</th>
+                                            <th>Descuento</th>
+                                            <th>Paquetes</th>
+                                            <th>Porcentaje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scraping-data-body">
+                                        <!-- Filas generadas dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Archivos -->
+                <section id="file-visualization" class="mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-transparent">
+                            <h3 class="card-title h5 mb-0">Archivos Descargados</h3>
+                            <small class="text-muted">Gestión de CSV, logs y otros recursos generados.</small>
+                        </div>
+                        <div class="card-body">
+                            <div id="files-list-container" class="row g-3">
+                                <!-- Tarjetas de archivos dinámicas -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Calendario -->
+                <section id="calendar-view" class="mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="card-title h5 mb-0">Calendario de Actividades</h3>
+                                <small class="text-muted">Programación de ejecuciones y tareas.</small>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="calendar"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> [web:2]
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script> [web:1]
+
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.18/index.global.min.js'></script> [web:7]
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.18/index.global.min.js'></script> [web:7]
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core/locales/es.global.min.js'></script> [web:7]
+
+    <script type="module" src="js/main.js"></script>
+
+    <script>
+        // Toggle sidebar en mobile
+        const wrapper = document.getElementById('wrapper');
+        const toggleBtn = document.getElementById('menu-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                wrapper.classList.toggle('toggled');
+            });
+        }
+    </script>
+</body>
+</html>
