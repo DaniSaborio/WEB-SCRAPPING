@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:15
+    image: postgres:16
     container_name: webscrap_db
     environment:
       POSTGRES_DB: ${PG_DB:-steam_scraper}
@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-scraper} -d ${PG_DB:-steam_scraper}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
